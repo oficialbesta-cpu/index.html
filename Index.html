@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>ERRO 404 AI</title>
+<style>
+    body {
+        font-family: Arial;
+        background: #0d0d0d;
+        color: white;
+        margin: 0;
+        padding: 0;
+    }
+
+    header {
+        background: #1a1a1a;
+        padding: 20px;
+        text-align: center;
+        font-size: 30px;
+        font-weight: bold;
+    }
+
+    #chat {
+        height: 60vh;
+        overflow-y: scroll;
+        padding: 15px;
+        background: #121212;
+        border-top: 2px solid #333;
+        border-bottom: 2px solid #333;
+    }
+
+    .msg {
+        margin-bottom: 15px;
+        background: #1f1f1f;
+        padding: 10px;
+        border-radius: 8px;
+        white-space: pre-wrap;
+    }
+
+    .code-block {
+        background: #000;
+        padding: 10px;
+        border-radius: 8px;
+        margin-top: 10px;
+        color: #00ff99;
+    }
+
+    #input-area {
+        display: flex;
+        padding: 15px;
+        background: #1a1a1a;
+    }
+
+    #pergunta {
+        flex: 1;
+        padding: 10px;
+        font-size: 18px;
+    }
+
+    #enviar {
+        padding: 10px 20px;
+        margin-left: 10px;
+        font-size: 18px;
+    }
+
+    #dev-btn {
+        position: absolute;
+        top: 20px;
+        right: 20px;
+        background: red;
+        padding: 8px;
+        border-radius: 6px;
+        cursor: pointer;
+    }
+
+    #dev-panel {
+        display: none;
+        background: #222;
+        padding: 20px;
+        margin: 20px;
+        border: 2px solid #444;
+    }
+
+    #prompt {
+        width: 100%;
+        height: 120px;
+    }
+
+    .copiar-btn {
+        background: #444;
+        padding: 5px 10px;
+        border-radius: 5px;
+        cursor: pointer;
+        margin-bottom: 5px;
+        display: inline-block;
+    }
+</style>
+</head>
+
+<body>
+
+<header>ERRO 404 AI</header>
+
+<div id="dev-btn">DEV</div>
+
+<div id="dev-panel">
+    <h3>SENHA:</h3>
+    <input type="password" id="senha" placeholder="Digite a senha">
+    <button onclick="verificarSenha()">OK</button>
+
+    <div id="prompt-area" style="display:none;">
+        <h3>Prompt da IA:</h3>
+        <textarea id="prompt"></textarea>
+        <button onclick="salvarPrompt()">Salvar Prompt</button>
+    </div>
+</div>
+
+<div id="chat"></div>
+
+<div id="input-area">
+    <input id="pergunta" type="text" placeholder="ENVIE SUA PERGUNTA">
+    <button id="enviar" onclick="enviarPergunta()">ENVIAR</button>
+</div>
+
+<script>
+    let promptSistema = "Você é uma IA chamada ERRO 404 AI.";
+
+    // COLOQUE SUA API KEY AQUI
+    const API_KEY = "AIzaSyDg9EAN5Ep9eXACi8aMXvZBklEU_hIqsVo";
+
+    function verificarSenha() {
+        const s = document.getElementById("senha").value;
+        if (s === "404") {
+            document.getElementById("prompt-area").style.display = "block";
+        } else {
+            alert("Senha incorreta!");
+        }
+    }
+
+    function salvarPrompt() {
+        promptSistema = document.getElementById("prompt").value;
+        alert("Prompt atualizado!");
+    }
+
+    function adicionarMensagem(texto, isCode=false) {
+        const chat = document.getElementById("chat");
+
+        const div = document.createElement("div");
+        div.className = "msg";
+
+        if (isCode) {
+            const btn = document.createElement("div");
+            btn.className = "copiar-btn";
+            btn.innerText = "COPIAR";
+            btn.onclick = () => navigator.clipboard.writeText(texto);
+            div.appendChild(btn);
+
+            const code = document.createElement("div");
+            code.className = "code-block";
+            code.innerText = texto;
+            div.appendChild(code);
+        } else {
+            div.innerText = texto;
+        }
+
+        chat.appendChild(div);
+        chat.scrollTop = chat.scrollHeight;
+    }
+
+    async function enviarPergunta() {
+        const pergunta = document.getElementById("pergunta").value;
+        if (!pergunta) return;
+
+        adicionarMensagem("Você: " + pergunta);
+        document.getElementById("pergunta").value = "";
+
+        const url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=" + API_KEY;
+
+        const body = {
+            contents: [{
+                role: "user",
+                parts: [{ text: promptSistema + "\n\nPergunta: " + pergunta }]
+            }]
+        };
+
+        const resposta = await fetch(url, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(body)
+        });
+
+        const data = await resposta.json();
+        let texto = data.contents?.[0]?.parts?.[0]?.text || "Erro na resposta.";
+
+        // Detectar código (três crases)
+        if (texto.includes("```")) {
+            const codigo = texto.split("```")[1];
+            adicionarMensagem(codigo, true);
+        } else {
+            adicionarMensagem(texto);
+        }
+    }
+</script>
+
+</body>
+  </html>
